@@ -1,17 +1,17 @@
 <?php
 
-namespace AgingCards\NormalAgingCards;
+namespace Cards\Robinson;
 
 use BgaHelpers\CardCreationSpec;
 
-class VeryStupid extends NormalAging
+class Distracted extends Robinson
 {
-    public static int $typeArg = 5;
-    public static int $howManyInDeck = 1;
+    public static int $typeArg = 1;
+    public static int $howManyInDeck = 5;
 
     public function __construct()
     {
-        parent::__construct("Very Stupid", -3);
+        parent::__construct("Distracted", -1);
     }
 
     public static function cardCreationSpec(): CardCreationSpec

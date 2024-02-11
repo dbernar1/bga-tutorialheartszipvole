@@ -1,17 +1,18 @@
 <?php
 
-namespace AgingCards\NormalAgingCards;
+namespace Cards\Robinson;
 
 use BgaHelpers\CardCreationSpec;
+use SpecialAbilities\PositiveSpecialAbilities\GainLife;
 
-class VeryStupid extends NormalAging
+class Eating extends Robinson
 {
     public static int $typeArg = 5;
     public static int $howManyInDeck = 1;
 
     public function __construct()
     {
-        parent::__construct("Very Stupid", -3);
+        parent::__construct("Eating", 0, new GainLife(2));
     }
 
     public static function cardCreationSpec(): CardCreationSpec

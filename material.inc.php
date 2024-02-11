@@ -27,12 +27,12 @@ use AgingCards\NormalAgingCards\Scared;
 use AgingCards\NormalAgingCards\Stupid;
 use AgingCards\NormalAgingCards\VeryStupid;
 use AgingCards\NormalAgingCards\VeryTired;
-use Card\Pirate;
-use Cards\RobinsonCards\Distracted;
-use Cards\RobinsonCards\Eating;
-use Cards\RobinsonCards\Focused;
-use Cards\RobinsonCards\Genius;
-use Cards\RobinsonCards\Weak;
+use Cards\Pirate;
+use Cards\Robinson\Distracted;
+use Cards\Robinson\Eating;
+use Cards\Robinson\Focused;
+use Cards\Robinson\Genius;
+use Cards\Robinson\Weak;
 use HazardCards\Hazard;
 use HazardCards\HazardSides\Cannibals;
 use HazardCards\HazardSides\ExploringTheIsland;
@@ -64,7 +64,6 @@ $this->robinsonCards = [
     new Focused(),
     new Focused(),
     new Focused(),
-    new Focused(),
     new Genius(),
     new Eating(),
     new Distracted(),
@@ -72,6 +71,7 @@ $this->robinsonCards = [
     new Distracted(),
     new Distracted(),
     new Distracted(),
+    new Weak(),
     new Weak(),
     new Weak(),
     new Weak(),
