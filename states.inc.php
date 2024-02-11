@@ -55,17 +55,22 @@ if (!defined("ST_END_GAME")) {
     define("ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD", 13);
     define("ST_PLAYER_ENCOUNTER_NO_FREE_CARDS_DRAWN", 16);
     define("ST_GAME_PROCESSING_DRAWN_CARD", 19);
-    define("ST_PLAYER_ENCOUNTER_WON", 22);
-    define("ST_PLAYER_ENCOUNTER_NOT_WON_YET", 25);
-    define("ST_GAME_PROCESSING_ENCOUNTER_WIN", 28);
-    define("ST_GAME_FINALIZING_ENCOUNTER", 31);
-    define("ST_GAME_ADVANCING_PHASE", 34);
-    define("ST_PLAYER_ALL_HAZARD_PHASES_COMPLETED", 37);
-    define("ST_PLAYER_PIRATE_ENCOUNTER_NO_FREE_CARDS_DRAWN", 40);
-    define("ST_GAME_PROCESSING_DRAWN_CARD_FOR_PIRATE_ENCOUNTER", 43);
-    define("ST_PLAYER_PIRATE_ENCOUNTER_NOT_WON_YET", 46);
-    define("ST_GAME_PROCESSING_PIRATE_ENCOUNTER_WIN", 49);
-    define("ST_PLAYER_FIRST_PIRATE_ENCOUNTER_WON", 52);
+    define("ST_GAME_PROCESSING_CARD_SPECIAL_ABILITY", 20);
+    define("ST_PLAYER_ENCOUNTER_WON", 30);
+    define("ST_PLAYER_ENCOUNTER_NOT_WON_YET", 35);
+    define("ST_GAME_PROCESSING_ENCOUNTER_LOSS", 26);
+    define("ST_PLAYER_CAN_DESTROY_CARDS", 27);
+    define("ST_PLAYER_SELECT_CARD_TO_DESTROY", 28);
+    define("ST_GAME_PROCESSING_CARD_DESTRUCTION", 29);
+    define("ST_GAME_PROCESSING_ENCOUNTER_WIN", 45);
+    define("ST_GAME_FINALIZING_ENCOUNTER", 50);
+    define("ST_GAME_ADVANCING_PHASE", 55);
+    define("ST_PLAYER_ALL_HAZARD_PHASES_COMPLETED", 60);
+    define("ST_PLAYER_PIRATE_ENCOUNTER_NO_FREE_CARDS_DRAWN", 63);
+    define("ST_GAME_PROCESSING_DRAWN_CARD_FOR_PIRATE_ENCOUNTER", 66);
+    define("ST_PLAYER_PIRATE_ENCOUNTER_NOT_WON_YET", 70);
+    define("ST_GAME_PROCESSING_PIRATE_ENCOUNTER_WIN", 77);
+    define("ST_PLAYER_FIRST_PIRATE_ENCOUNTER_WON", 80);
     define("ST_PLAYER_GAME_WON", 93);
     define("ST_PLAYER_GAME_LOST", 96);
     define("ST_MANAGER_END_GAME", 99);
@@ -78,7 +83,7 @@ $machinestates = [
         "description" => "",
         "type" => "manager",
         "action" => "stGameSetup",
-        "transitions" => array("" => ST_PLAYER_BEFORE_ENCOUNTER)
+        "transitions" => ["" => ST_PLAYER_BEFORE_ENCOUNTER],
     ],
 
     ST_PLAYER_BEFORE_ENCOUNTER => [
@@ -86,22 +91,22 @@ $machinestates = [
         "possibleActions" => ["getHazardOptions"],
         "transitions" => [
             "getHazardOptions" => ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD,
-        ]
+        ],
     ],
     ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD => [
-        //TODO: What when there is only one hazard left?
         "type" => "activeplayer",
-        "possibleActions" => ["chooseHazard"],
+        "possibleActions" => ["chooseHazard", "ignoreSingleHazard"],
         "transitions" => [
             "chooseHazard" => ST_PLAYER_ENCOUNTER_NO_FREE_CARDS_DRAWN,
-        ]
+            "ignoreSingleHazard" => ST_GAME_FINALIZING_ENCOUNTER,
+        ],
     ],
     ST_PLAYER_ENCOUNTER_NO_FREE_CARDS_DRAWN => [
         "type" => "activeplayer",
         "possibleActions" => ["drawFirstFreeCard"],
         "transitions" => [
             "drawFirstFreeCard" => ST_GAME_PROCESSING_DRAWN_CARD,
-        ]
+        ],
     ],
     ST_GAME_PROCESSING_DRAWN_CARD => [
         "type" => "game",
@@ -109,15 +114,51 @@ $machinestates = [
             "encounterNotWonYet" => ST_PLAYER_ENCOUNTER_NOT_WON_YET,
             "encounterWon" => ST_PLAYER_ENCOUNTER_WON,
             "ranOutOfLives" => ST_PLAYER_GAME_LOST,
-        ]
+        ],
     ],
     ST_PLAYER_ENCOUNTER_NOT_WON_YET => [
         "type" => "activeplayer",
-        "possibleActions" => ["drawFreeCard", "drawPaidCard"], // TODO: Card special abilities
+        "possibleActions" => ["drawFreeCard", "drawPaidCard", "useCardSpecialAbility"],
         "transitions" => [
             "drawFreeCard" => ST_GAME_PROCESSING_DRAWN_CARD,
             "drawPaidCard" => ST_GAME_PROCESSING_DRAWN_CARD,
-        ]
+            "useCardSpecialAbility" => ST_GAME_PROCESSING_CARD_SPECIAL_ABILITY,
+            "loseEncounter" => ST_GAME_PROCESSING_ENCOUNTER_LOSS,
+        ],
+    ],
+    ST_GAME_PROCESSING_ENCOUNTER_LOSS => [
+        "type" => "game",
+        "transitions" => [
+            "notEnoughLives" => ST_PLAYER_GAME_LOST,
+            "enoughLives" => ST_PLAYER_CAN_DESTROY_CARDS,
+        ],
+    ],
+    ST_PLAYER_CAN_DESTROY_CARDS => [
+        "type" => "activeplayer",
+        "possibleActions" => ["startCardDestructionSelection", "noNeedToDestroyAnything"],
+        "transitions" => [
+            "startCardDestructionSelection" => ST_PLAYER_SELECT_CARD_TO_DESTROY,
+            "noNeedToDestroyAnything" => ST_GAME_FINALIZING_ENCOUNTER,
+        ],
+    ],
+    ST_PLAYER_SELECT_CARD_TO_DESTROY => [
+        "type" => "activeplayer",
+        "possibleActions" => ["selectCard", "noNeedToDestroyAnything"],
+        "transitions" => [
+            "selectCard" => ST_GAME_PROCESSING_CARD_DESTRUCTION,
+            "noNeedToDestroyAnything" => ST_GAME_FINALIZING_ENCOUNTER,
+        ],
+    ],
+    ST_GAME_PROCESSING_CARD_DESTRUCTION => [
+        "type" => "game",
+        "transitions" => [
+            "canNotDestroyMore" => ST_GAME_FINALIZING_ENCOUNTER,
+            "canDestroyMore" => ST_PLAYER_SELECT_CARD_TO_DESTROY,
+        ],
+    ],
+    ST_GAME_PROCESSING_CARD_SPECIAL_ABILITY => [
+        "type" => "game",
+        // TODO: Card special abilities
     ],
     ST_PLAYER_ENCOUNTER_WON => [
         "type" => "activeplayer",
@@ -126,7 +167,7 @@ $machinestates = [
             "drawFreeCard" => ST_GAME_PROCESSING_DRAWN_CARD,
             "drawPaidCard" => ST_GAME_PROCESSING_DRAWN_CARD,
             "celebrateWin" => ST_GAME_PROCESSING_ENCOUNTER_WIN,
-        ]
+        ],
     ],
     ST_GAME_PROCESSING_ENCOUNTER_WIN => [
         "type" => "game",
@@ -135,36 +176,32 @@ $machinestates = [
         ],
     ],
     ST_GAME_FINALIZING_ENCOUNTER => [
-        "name" => "afterEncounter",
-        "description" => '',
         "type" => "game",
-        "action" => "stAfterEncounter",
         "transitions" => [
-            "endGame" => ST_MANAGER_END_GAME,
             "progressPhase" => ST_GAME_ADVANCING_PHASE,
-            "nextEncounter" => ST_PLAYER_BEFORE_ENCOUNTER
-        ]
+            "nextEncounter" => ST_PLAYER_BEFORE_ENCOUNTER,
+        ],
     ],
     ST_GAME_ADVANCING_PHASE => [
         "type" => "game",
         "transitions" => [
             "pirates" => ST_PLAYER_ALL_HAZARD_PHASES_COMPLETED,
             "normal" => ST_PLAYER_BEFORE_ENCOUNTER,
-        ]
+        ],
     ],
     ST_PLAYER_ALL_HAZARD_PHASES_COMPLETED => [
         "type" => "activeplayer",
         "possibleActions" => ["selectFirstPirateEncounter"],
         "transitions" => [
             "selectFirstPirateEncounter" => ST_PLAYER_PIRATE_ENCOUNTER_NO_FREE_CARDS_DRAWN,
-        ]
+        ],
     ],
     ST_PLAYER_PIRATE_ENCOUNTER_NO_FREE_CARDS_DRAWN => [
         "type" => "activeplayer",
         "possibleActions" => ["drawFirstFreeCard"],
         "transitions" => [
             "drawFirstFreeCard" => ST_GAME_PROCESSING_DRAWN_CARD_FOR_PIRATE_ENCOUNTER,
-        ]
+        ],
     ],
     ST_GAME_PROCESSING_DRAWN_CARD_FOR_PIRATE_ENCOUNTER => [
         "type" => "game",
@@ -172,7 +209,7 @@ $machinestates = [
             "encounterNotWonYet" => ST_PLAYER_PIRATE_ENCOUNTER_NOT_WON_YET,
             "encounterWon" => ST_GAME_PROCESSING_PIRATE_ENCOUNTER_WIN,
             "ranOutOfLives" => ST_PLAYER_GAME_LOST,
-        ]
+        ],
     ],
     ST_PLAYER_PIRATE_ENCOUNTER_NOT_WON_YET => [
         "type" => "activeplayer",
@@ -180,14 +217,14 @@ $machinestates = [
         "transitions" => [
             "drawFreeCard" => ST_GAME_PROCESSING_DRAWN_CARD_FOR_PIRATE_ENCOUNTER,
             "drawPaidCard" => ST_GAME_PROCESSING_DRAWN_CARD_FOR_PIRATE_ENCOUNTER,
-        ]
+        ],
     ],
     ST_GAME_PROCESSING_PIRATE_ENCOUNTER_WIN => [
         "type" => "game",
         "transitions" => [
             "firstPirateEncounterWon" => ST_PLAYER_FIRST_PIRATE_ENCOUNTER_WON,
             "bothPirateEncountersWon" => ST_PLAYER_GAME_WON,
-        ]
+        ],
     ],
     ST_PLAYER_FIRST_PIRATE_ENCOUNTER_WON => [
         "type" => "activeplayer",
@@ -196,21 +233,21 @@ $machinestates = [
             "drawFreeCard" => ST_GAME_PROCESSING_DRAWN_CARD_FOR_PIRATE_ENCOUNTER,
             "drawPaidCard" => ST_GAME_PROCESSING_DRAWN_CARD_FOR_PIRATE_ENCOUNTER,
             "celebrateWin" => ST_GAME_PROCESSING_PIRATE_ENCOUNTER_WIN,
-        ]
+        ],
     ],
     ST_PLAYER_GAME_WON => [
         "type" => "activeplayer",
         "possibleActions" => ["celebrateGameWin"],
         "transitions" => [
             "celebrateWin" => ST_MANAGER_END_GAME,
-        ]
+        ],
     ],
     ST_PLAYER_GAME_LOST => [
         "type" => "activeplayer",
         "possibleActions" => ["mournDeathOfRobinson"],
         "transitions" => [
             "mournDeathOfRobinson" => ST_MANAGER_END_GAME,
-        ]
+        ],
     ],
     // Final state.
     // Please do not modify (and do not overload action/args methods).
@@ -219,7 +256,7 @@ $machinestates = [
         "description" => clienttranslate("End of game"),
         "type" => "manager",
         "action" => "stGameEnd",
-        "args" => "argGameEnd"
+        "args" => "argGameEnd",
     ],
 ];
 
