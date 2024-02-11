@@ -72,13 +72,71 @@ require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
 if (!defined('OPTION_LEVEL')) {
     define('OPTION_LEVEL', 'OPTION_LEVEL');
+    define('CURRENT_PHASE', 'CURRENT_PHASE');
+    define('REMAINING_LIVES', 'REMAINING_LIVES');
+    define('SPARE_LIVES', 'SPARE_LIVES');
+    define('GREEN_PHASE', '1');
+    define('YELLOW_PHASE', '2');
+    define('RED_PHASE', '3');
+    define('PIRATE_PHASE', '4');
+}
+
+class GameStateEntry
+{
+    public int $id;
+    public string $name;
+    public ?string $initialValue;
+
+    /**
+     * @param int $id
+     * @param string $name
+     * @param string|null $initialValue
+     */
+    public function __construct(int     $id,
+                                string  $name,
+                                ?string $initialValue = null)
+    {
+        $this->id = $id;
+        $this->name = $name;
+        $this->initialValue = $initialValue;
+    }
+
+    public function hasInitialValue(): bool
+    {
+        return !is_null($this->initialValue);
+    }
+}
+
+class GameOption
+{
+    public int $id;
+    public string $name;
+    public string $translatedLabel;
+    public array $availableOptions;
+    public int $defaultValue;
+    public int $selectedValue;
+
+    public function __construct(int    $id,
+                                string $name,
+                                string $translatedLabel,
+                                array  $availableOptions,
+                                int    $defaultValue)
+    {
+        $this->id = $id;
+        $this->name = $name;
+        $this->translatedLabel = $translatedLabel;
+        $this->availableOptions = $availableOptions;
+        $this->defaultValue = $defaultValue;
+    }
 }
 
 class TutorialHeartsZipvole extends Table
 {
     private CardTypes $cardTypes;
-    private int $startingLives;
-    private int $spareLives = 2;
+
+    private array $gameStateEntries;
+    private array $gameOptions;
+    private array $cards;
 
     function __construct()
     {
@@ -90,32 +148,59 @@ class TutorialHeartsZipvole extends Table
         // Note: afterwards, you can get/set the global variables with getGameStateValue/setGameStateInitialValue/setGameStateValue
         parent::__construct();
 
-        self::initGameStateLabels([
-                                      OPTION_LEVEL => 101,
-                                  ]);
+        $this->gameStateEntries = [
+            new GameStateEntry(10, CURRENT_PHASE, GREEN_PHASE),
+            new GameStateEntry(11, REMAINING_LIVES),
+            new GameStateEntry(12, SPARE_LIVES, 2),
+        ];
 
-        $this->cards = self::getNew("module.common.deck");
-        $this->cards->init("card");
+        $this->gameOptions = [
+            OPTION_LEVEL => new GameOption(100,
+                                           OPTION_LEVEL,
+                                           totranslate('Level'),
+                                           [
+                                               1 => [
+                                                   'name' => totranslate('Level 1'),
+                                                   'description' => totranslate("Start with 20 lives"),
+                                                   'tmdisplay' => totranslate('Level 1'),
+                                               ],
+                                               2 => [
+                                                   'name' => totranslate('Level 2'),
+                                                   'description' => totranslate("Instead of playing 3 rounds, the game stops when a player reaches or goes over 26."),
+                                                   'tmdisplay' => totranslate('Level 2'),
+                                               ],
+                                           ],
+                                           1),
+        ];
+
+        self::initGameStateLabels(array_merge($this->gameStateLabels(),
+                                              $this->gameOptionLabels()));
+
+        $this->cards = $this->createDeck('card');
     }
 
-    private function getCurrentGameLevel(): int
+    private function gameStateLabels()
     {
-        return intval($this->getGameStateValue(OPTION_LEVEL));
+        return array_map(
+            fn(GameStateEntry $gameStateEntry) => $gameStateEntry->initLabels(),
+            $this->gameStateEntries
+        );
     }
 
-    protected function getGameName()
+    private function initializeGameStateDependingOnSelectedOptions(): void
     {
-        // Used for translations and stuff. Please do not modify.
-        return "tutorialheartszipvole";
+        $startingLives = $this->gameOptions[OPTION_LEVEL]->selectedValue === 4 ? 18 : 20;
+        $this->setGameStateInitialValue(REMAINING_LIVES, $startingLives);
     }
 
     /*
         setupNewGame:
-        
+
         This method is called only once, when a new game is launched.
         In this method, you must setup the game according to the game rules, so that
         the game is ready to be played.
     */
+
     protected function setupNewGame($players,
                                     $options = array())
     {
@@ -138,17 +223,22 @@ class TutorialHeartsZipvole extends Table
         self::reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
         self::reloadPlayersBasicInfos();
 
+        /****** Some Basic Initialization ******/
+        foreach ($this->gameStateEntries as $gameStateEntry) {
+            $this->initializeGameStateFor($gameStateEntry);
+        }
+        /***** End of Basic Initialization *****/
+
         /************ Start the game initialization *****/
 
-        $currentGameLevel = $this->getCurrentGameLevel();
-
+        $this->getSelectedOptionValues();
         $this->cardTypes = new CardTypes();
 
         $this->cards->createCards($this->cardTypes->toCreateCardsSpec($currentGameLevel),
-                                  'fighting_deck');
+                                  'deck');
+        $this->cards->shuffle();
 
-        $this->startingLives = $currentGameLevel === 4 ? 18 : 20;
-
+        $this->initializeGameStateDependingOnSelectedOptions();
 
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
@@ -156,11 +246,17 @@ class TutorialHeartsZipvole extends Table
         /************ End of the game initialization *****/
     }
 
+    protected function getGameName()
+    {
+        // Used for translations and stuff. Please do not modify.
+        return "tutorialheartszipvole";
+    }
+
     /*
-        getAllDatas: 
-        
+        getAllDatas:
+
         Gather all informations about current game situation (visible by the current player).
-        
+
         The method is called each time the game interface is displayed to a player, ie:
         _ when the game starts
         _ when a player refreshes the game page (F5)
@@ -183,12 +279,12 @@ class TutorialHeartsZipvole extends Table
 
     /*
         getGameProgression:
-        
+
         Compute and return the current game progression.
         The number returned must be an integer beween 0 (=the game just started) and
         100 (= the game is finished or almost finished).
-    
-        This method is called each time we are in a game state with the "updateGameProgression" property set to true 
+
+        This method is called each time we are in a game state with the "updateGameProgression" property set to true
         (see states.inc.php)
     */
     function getGameProgression()
@@ -201,7 +297,7 @@ class TutorialHeartsZipvole extends Table
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Utility functions
-////////////    
+////////////
 
     /*
         In this space, you can put any utility methods useful for your game logic
@@ -210,7 +306,7 @@ class TutorialHeartsZipvole extends Table
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
-//////////// 
+////////////
 
     /*
         Each time a player is doing some game action, one of the methods below is called.
@@ -218,19 +314,19 @@ class TutorialHeartsZipvole extends Table
     */
 
     /*
-    
+
     Example:
 
     function playCard( $card_id )
     {
         // Check that this is the player's turn and that it is a "possible action" at this game state (see states.inc.php)
-        self::checkAction( 'playCard' ); 
-        
+        self::checkAction( 'playCard' );
+
         $player_id = self::getActivePlayerId();
-        
-        // Add your game logic to play a card there 
+
+        // Add your game logic to play a card there
         ...
-        
+
         // Notify all players about the card played
         self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
             'player_id' => $player_id,
@@ -238,9 +334,9 @@ class TutorialHeartsZipvole extends Table
             'card_name' => $card_name,
             'card_id' => $card_id
         ) );
-          
+
     }
-    
+
     */
 
 
@@ -255,20 +351,20 @@ class TutorialHeartsZipvole extends Table
     */
 
     /*
-    
+
     Example for game state "MyGameState":
-    
+
     function argMyGameState()
     {
         // Get some values from the current game situation in database...
-    
+
         // return values:
         return array(
             'variable1' => $value1,
             'variable2' => $value2,
             ...
         );
-    }    
+    }
     */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -281,16 +377,16 @@ class TutorialHeartsZipvole extends Table
     */
 
     /*
-    
+
     Example for game state "MyGameState":
 
     function stMyGameState()
     {
         // Do some stuff ...
-        
+
         // (very often) go to another gamestate
         $this->gamestate->nextState( 'some_gamestate_transition' );
-    }    
+    }
     */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -299,15 +395,15 @@ class TutorialHeartsZipvole extends Table
 
     /*
         zombieTurn:
-        
+
         This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
         You can do whatever you want in order to make sure the turn of this player ends appropriately
         (ex: pass).
-        
+
         Important: your zombie code will be called when the player leaves the game. This action is triggered
         from the main site and propagated to the gameserver from a server, not from a browser.
         As a consequence, there is no current player associated to this action. In your zombieTurn function,
-        you must _never_ use getCurrentPlayerId() or getCurrentPlayerName(), otherwise it will fail with a "Not logged" error message. 
+        you must _never_ use getCurrentPlayerId() or getCurrentPlayerName(), otherwise it will fail with a "Not logged" error message.
     */
 
     function zombieTurn($state,
@@ -341,13 +437,13 @@ class TutorialHeartsZipvole extends Table
 
     /*
         upgradeTableDb:
-        
+
         You don't have to care about this until your game has been published on BGA.
         Once your game is on BGA, this method is called everytime the system detects a game running with your old
         Database scheme.
         In this case, if you change your Database scheme, you just have to apply the needed changes in order to
         update the game database and allow the game to continue to run with your new version.
-    
+
     */
 
     function upgradeTableDb($from_version)
@@ -376,6 +472,33 @@ class TutorialHeartsZipvole extends Table
 //
 
 
+    }
+
+    private function getCurrentGameLevel(): int
+    {
+        return intval($this->getGameStateValue(OPTION_LEVEL));
+    }
+
+    private function createDeck(string $tableName)
+    {
+        $deck = self::getNew("module.common.deck");
+        $deck->init($tableName);
+
+        return $deck;
+    }
+
+    private function initializeGameStateFor(GameStateEntry $gameStateEntry)
+    {
+        if ($gameStateEntry->hasInitialValue()) {
+            $this->setGameStateInitialValue($gameStateEntry->name, $gameStateEntry->initialValue);
+        }
+    }
+
+    private function getSelectedOptionValues()
+    {
+        foreach ($this->gameOptions as $gameOption) {
+            $gameOption->selectedValue = intval($this->getGameStateValue($gameOption->name));
+        }
     }
 }
 
