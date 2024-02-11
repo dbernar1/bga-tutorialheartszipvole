@@ -1,26 +1,23 @@
 <?php
 
-namespace Cards\Robinson;
+namespace Cards\Aging;
 
-use Cards\Fighting;
 use SpecialAbilities\SpecialAbility;
 
-class Robinson extends Fighting
+class DifficultAging extends Aging
 {
-    const CARD_TYPE = "Robinson";
-
-    const ROBINSON_CARD_DESTRUCTION_COST = 1;
+    const CARD_TYPE = "Difficult Aging";
 
     public function __construct(int            $howManyInDeck,
                                 string         $title,
-                                string         $fightingValue,
+                                int            $fightingValue,
                                 SpecialAbility $specialAbility = null)
     {
         parent::__construct(self::CARD_TYPE,
                             $howManyInDeck,
                             $title,
                             $fightingValue,
-                            self::ROBINSON_CARD_DESTRUCTION_COST,
+                            Aging::DIFFICULT,
                             $specialAbility);
     }
 }

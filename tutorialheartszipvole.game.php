@@ -27,11 +27,40 @@ spl_autoload_register(function ($className) {
     }
 });
 
-use AgingCards\NormalAgingCards\Hungry;
-use AgingCards\NormalAgingCards\Scared;
-use AgingCards\NormalAgingCards\Stupid;
-use AgingCards\NormalAgingCards\VeryStupid;
-use AgingCards\NormalAgingCards\VeryTired;
+use Cards\Aging\Difficult\Idiotic;
+use Cards\Aging\Difficult\Suicidal;
+use Cards\Aging\Difficult\VeryHungry;
+use Cards\Aging\Normal\Hungry;
+use Cards\Aging\Normal\Scared;
+use Cards\Aging\Normal\Stupid;
+use Cards\Aging\Normal\VeryStupid;
+use Cards\Aging\Normal\VeryTired;
+use Cards\Card;
+use Cards\Hazard\Cannibals\EncounterCannibalsToAcquireWeapon;
+use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToAcquireFood;
+use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToAcquireWeapon;
+use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToLearnDeception;
+use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToLearnMimicry;
+use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToLearnRealization;
+use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToLearnRepeat;
+use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToAcquireFood;
+use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToGainExperience;
+use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToLearnRealization;
+use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToLearnRepeat;
+use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToLearnStrategy;
+use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToLearnVision;
+use Cards\Hazard\WildAnimals\EncounterWildAnimalsToLearnExperience;
+use Cards\Hazard\WildAnimals\EncounterWildAnimalsToLearnRealization;
+use Cards\Hazard\WildAnimals\EncounterWildAnimalsToLearnStrategy;
+use Cards\Hazard\WildAnimals\EncounterWildAnimalsToLearnVision;
+use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToAcquireBooks;
+use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToAcquireEquipment;
+use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToAcquireFood;
+use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToDevelopStrategy;
+use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToLearnDeception;
+use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToLearnMimicry;
+use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToLearnRealization;
+use Cards\Pirate;
 use Cards\Robinson\Distracted;
 use Cards\Robinson\Eating;
 use Cards\Robinson\Focused;
@@ -47,6 +76,10 @@ if (!defined('OPTION_LEVEL')) {
 
 class TutorialHeartsZipvole extends Table
 {
+    private CardTypes $cardTypes;
+    private int $startingLives;
+    private int $spareLives = 2;
+
     function __construct()
     {
         // Your global variables labels:
@@ -63,11 +96,6 @@ class TutorialHeartsZipvole extends Table
 
         $this->cards = self::getNew("module.common.deck");
         $this->cards->init("card");
-
-        $this->cards->createCards(array_merge($this->robinsonCards(),
-                                              $this->agingCards($this->getCurrentGameLevel()),
-                                  ),
-                                  'fighting_deck');
     }
 
     private function getCurrentGameLevel(): int
@@ -105,22 +133,21 @@ class TutorialHeartsZipvole extends Table
             $color = array_shift($default_colors);
             $values[] = "('" . $player_id . "','$color','" . $player['player_canal'] . "','" . addslashes($player['player_name']) . "','" . addslashes($player['player_avatar']) . "')";
         }
-        $sql .= implode($values, ',');
+        $sql .= implode(',', $values);
         self::DbQuery($sql);
         self::reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
         self::reloadPlayersBasicInfos();
 
         /************ Start the game initialization *****/
 
-        // Init global values with their initial values
-        //self::setGameStateInitialValue( 'my_first_global_variable', 0 );
+        $currentGameLevel = $this->getCurrentGameLevel();
 
-        // Init game statistics
-        // (note: statistics used in this file must be defined in your stats.inc.php file)
-        //self::initStat( 'table', 'table_teststat1', 0 );    // Init a table statistics
-        //self::initStat( 'player', 'player_teststat1', 0 );  // Init a player statistics (for all players)
+        $this->cardTypes = new CardTypes();
 
-        // TODO: setup the initial game situation here
+        $this->cards->createCards($this->cardTypes->toCreateCardsSpec($currentGameLevel),
+                                  'fighting_deck');
+
+        $this->startingLives = $currentGameLevel === 4 ? 18 : 20;
 
 
         // Activate first player (which is in general a good idea :) )
@@ -350,36 +377,105 @@ class TutorialHeartsZipvole extends Table
 
 
     }
+}
 
-    private function robinsonCards(): array
+class CardTypes // TODO: This name sucks
+{
+    public array $robinsonCards;
+    public array $normalAgingCards;
+    public array $difficultAgingCards;
+    public array $hazardCards;
+    public array $pirateCards;
+
+    public function __construct()
     {
-        return
-            [
-                Distracted::cardCreationSpec()->toArray(),
-                Weak::cardCreationSpec()->toArray(),
-                Focused::cardCreationSpec()->toArray(),
-                Genius::cardCreationSpec()->toArray(),
-                Eating::cardCreationSpec()->toArray(),
-            ];
+        $this->robinsonCards = [
+            new Distracted(),
+            new Weak(),
+            new Focused(),
+            new Genius(),
+            new Eating(),
+        ];
+
+        $this->normalAgingCards = [
+            new \Cards\Aging\Normal\Distracted(),
+            new Scared(),
+            new VeryTired(),
+            new Hungry(),
+            new Stupid(),
+            new VeryStupid(),
+        ];
+
+        $this->difficultAgingCards = [
+            new VeryHungry(),
+            new Idiotic(),
+            new Suicidal(),
+        ];
+
+        $this->hazardCards = [
+            // TODO: Create classes that explain how many there are
+            new WithTheRaftToTheWreckToDevelopStrategy(),
+            new WithTheRaftToTheWreckToAcquireEquipment(),
+            new WithTheRaftToTheWreckToAcquireFood(),
+            new WithTheRaftToTheWreckToLearnMimicry(),
+            new WithTheRaftToTheWreckToLearnRealization(),
+            new WithTheRaftToTheWreckToLearnDeception(),
+            new WithTheRaftToTheWreckToAcquireBooks(),
+
+            new ExploringTheIslandToAcquireWeapon(),
+            new ExploringTheIslandToAcquireFood(),
+            new ExploringTheIslandToLearnDeception(),
+            new ExploringTheIslandToLearnRepeat(),
+            new ExploringTheIslandToLearnRealization(),
+            new ExploringTheIslandToLearnMimicry(),
+
+            new FurtherExploringTheIslandToLearnRepeat(),
+            new FurtherExploringTheIslandToAcquireFood(),
+            new FurtherExploringTheIslandToLearnStrategy(),
+            new FurtherExploringTheIslandToLearnVision(),
+            new FurtherExploringTheIslandToLearnRealization(),
+            new FurtherExploringTheIslandToGainExperience(),
+
+            new EncounterWildAnimalsToLearnVision(),
+            new EncounterWildAnimalsToLearnExperience(),
+            new EncounterWildAnimalsToLearnRealization(),
+            new EncounterWildAnimalsToLearnStrategy(),
+
+            new EncounterCannibalsToAcquireWeapon(),
+        ];
+
+        $this->pirateCards = array_rand([
+                                            new Pirate(6, 20),
+                                            new Pirate(7, 25),
+                                            new Pirate(8, 30),
+                                            new Pirate(9, 35),
+                                            new Pirate(10, 40),
+                                            //  TODO: Implement the more complicated pirate Cards
+                                        ],
+                                        2);
     }
 
-    private function agingCards(int $level)
+    public function toCreateCardsSpec(int $currentGameLevel): array
     {
-        $agingCards =
-            [
-                \AgingCards\NormalAgingCards\Distracted::cardCreationSpec()->toArray(),
-                Scared::cardCreationSpec()->toArray(),
-                VeryTired::cardCreationSpec()->toArray(),
-                Hungry::cardCreationSpec()->toArray(),
-                Stupid::cardCreationSpec()->toArray(),
+        $createCardSpecFor = function (int  $typeArg,
+                                       Card $card)
+        use
+        (
+            $currentGameLevel
+        ) {
+            return [
+                "type" => $card->cardType,
+                "type_arg" => $typeArg,
+                "nbr" => $card->getHowManyInDeck($currentGameLevel),
             ];
+        };
 
-        // TODO: Can 'nbr' be 0?
-
-        if ($level > 2) {
-            $agingCards[] = VeryStupid::cardCreationSpec()->toArray();
-        }
-
-        return $agingCards;
+        return array_merge(
+            array_map($createCardSpecFor, $this->robinsonCards),
+            array_map($createCardSpecFor, $this->normalAgingCards),
+            array_map($createCardSpecFor, $this->difficultAgingCards),
+            array_map($createCardSpecFor, $this->pirateCards),
+            array_map($createCardSpecFor, $this->hazardCards),
+        );
     }
 }

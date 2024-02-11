@@ -1,12 +1,14 @@
 <?php
 
-namespace Cards\Robinson;
+namespace Cards\Aging\Normal;
 
-class Distracted extends Robinson
+use Cards\Aging\NormalAging;
+
+class Distracted extends NormalAging
 {
     public function __construct()
     {
-        parent::__construct(5,
+        parent::__construct(1,
                             "Distracted",
                             -1);
     }

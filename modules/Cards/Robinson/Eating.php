@@ -2,23 +2,15 @@
 
 namespace Cards\Robinson;
 
-use BgaHelpers\CardCreationSpec;
-use SpecialAbilities\PositiveSpecialAbilities\GainLife;
+use SpecialAbilities\Positive\GainLife;
 
 class Eating extends Robinson
 {
-    public static int $typeArg = 5;
-    public static int $howManyInDeck = 1;
-
     public function __construct()
     {
-        parent::__construct("Eating", 0, new GainLife(2));
-    }
-
-    public static function cardCreationSpec(): CardCreationSpec
-    {
-        return (new CardCreationSpec(parent::$type,
-                                     self::$typeArg,
-                                     self::$howManyInDeck));
+        parent::__construct(1,
+                            "Eating",
+                            0,
+                            new GainLife(2));
     }
 }
