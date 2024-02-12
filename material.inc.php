@@ -27,29 +27,29 @@ use AgingCards\NormalAgingCards\Scared;
 use AgingCards\NormalAgingCards\Stupid;
 use AgingCards\NormalAgingCards\VeryStupid;
 use AgingCards\NormalAgingCards\VeryTired;
-use Cards\Hazard\Hazard;
 use Cards\Hazard\HazardSides\Cannibals;
 use Cards\Hazard\HazardSides\ExploringTheIsland;
 use Cards\Hazard\HazardSides\FurtherExploringTheIsland;
 use Cards\Hazard\HazardSides\WildAnimals;
 use Cards\Hazard\HazardSides\WithTheRaftToTheWreck;
-use Cards\Hazard\KnowledgeSides\Books;
-use Cards\Hazard\KnowledgeSides\Deception;
-use Cards\Hazard\KnowledgeSides\Equipment;
-use Cards\Hazard\KnowledgeSides\Experience;
-use Cards\Hazard\KnowledgeSides\Food;
-use Cards\Hazard\KnowledgeSides\Mimicry;
-use Cards\Hazard\KnowledgeSides\Realization;
-use Cards\Hazard\KnowledgeSides\Repeat;
-use Cards\Hazard\KnowledgeSides\Strategy;
-use Cards\Hazard\KnowledgeSides\Vision;
-use Cards\Hazard\KnowledgeSides\Weapon;
-use Cards\Pirate;
-use Cards\Robinson\Distracted;
-use Cards\Robinson\Eating;
-use Cards\Robinson\Focused;
-use Cards\Robinson\Genius;
-use Cards\Robinson\Weak;
+use Friday\Cards\Hazard\Hazard;
+use Friday\Cards\Hazard\KnowledgeSides\Books;
+use Friday\Cards\Hazard\KnowledgeSides\Deception;
+use Friday\Cards\Hazard\KnowledgeSides\Equipment;
+use Friday\Cards\Hazard\KnowledgeSides\Experience;
+use Friday\Cards\Hazard\KnowledgeSides\Food;
+use Friday\Cards\Hazard\KnowledgeSides\Mimicry;
+use Friday\Cards\Hazard\KnowledgeSides\Realization;
+use Friday\Cards\Hazard\KnowledgeSides\Repeat;
+use Friday\Cards\Hazard\KnowledgeSides\Strategy;
+use Friday\Cards\Hazard\KnowledgeSides\Vision;
+use Friday\Cards\Hazard\KnowledgeSides\Weapon;
+use Friday\Cards\Pirate;
+use Friday\Cards\Robinson\Distracted;
+use Friday\Cards\Robinson\Eating;
+use Friday\Cards\Robinson\Focused;
+use Friday\Cards\Robinson\Genius;
+use Friday\Cards\Robinson\Weak;
 
 $this->pirateCards = [
     new Pirate(6, 20),
@@ -89,7 +89,7 @@ $this->normalAgingCards = [
     new \AgingCards\NormalAgingCards\Distracted(),
     new Stupid(),
     new Stupid(),
-    new VeryStupid(), // TODO: Make sure this isn't included in level 1 game
+    new VeryStupid(),
 ];
 
 $this->difficultAgingCards = [

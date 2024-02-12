@@ -27,170 +27,40 @@ spl_autoload_register(function ($className) {
     }
 });
 
-use Cards\Aging\Difficult\Idiotic;
-use Cards\Aging\Difficult\Suicidal;
-use Cards\Aging\Difficult\VeryHungry;
-use Cards\Aging\Normal\Hungry;
-use Cards\Aging\Normal\Scared;
-use Cards\Aging\Normal\Stupid;
-use Cards\Aging\Normal\VeryStupid;
-use Cards\Aging\Normal\VeryTired;
-use Cards\Card;
-use Cards\Hazard\Cannibals\EncounterCannibalsToAcquireWeapon;
-use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToAcquireFood;
-use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToAcquireWeapon;
-use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToLearnDeception;
-use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToLearnMimicry;
-use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToLearnRealization;
-use Cards\Hazard\ExploringTheIsland\ExploringTheIslandToLearnRepeat;
-use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToAcquireFood;
-use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToGainExperience;
-use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToLearnRealization;
-use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToLearnRepeat;
-use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToLearnStrategy;
-use Cards\Hazard\FurtherExploringTheIsland\FurtherExploringTheIslandToLearnVision;
-use Cards\Hazard\WildAnimals\EncounterWildAnimalsToLearnExperience;
-use Cards\Hazard\WildAnimals\EncounterWildAnimalsToLearnRealization;
-use Cards\Hazard\WildAnimals\EncounterWildAnimalsToLearnStrategy;
-use Cards\Hazard\WildAnimals\EncounterWildAnimalsToLearnVision;
-use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToAcquireBooks;
-use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToAcquireEquipment;
-use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToAcquireFood;
-use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToDevelopStrategy;
-use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToLearnDeception;
-use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToLearnMimicry;
-use Cards\Hazard\WithTheRaftToTheWreck\WithTheRaftToTheWreckToLearnRealization;
-use Cards\Pirate;
-use Cards\Robinson\Distracted;
-use Cards\Robinson\Eating;
-use Cards\Robinson\Focused;
-use Cards\Robinson\Genius;
-use Cards\Robinson\Weak;
+use ZipVole\GameTraits\GameWithCards;
+use ZipVole\GameTraits\GameWithStateAndOptions;
+
+if (!defined("APP_GAMEMODULE_PATH")) {
+    define("APP_GAMEMODULE_PATH", "./bga_stubs/");
+}
 
 require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
+class TutorialHeartsZipvole extends Table {
+    use GameWithStateAndOptions;
+    use GameWithCards;
+    use FridayPlayerActions;
+    use FridayGameActions;
+    use FridayStateMachine;
 
-if (!defined('OPTION_LEVEL')) {
-    define('OPTION_LEVEL', 'OPTION_LEVEL');
-    define('CURRENT_PHASE', 'CURRENT_PHASE');
-    define('REMAINING_LIVES', 'REMAINING_LIVES');
-    define('SPARE_LIVES', 'SPARE_LIVES');
-    define('GREEN_PHASE', '1');
-    define('YELLOW_PHASE', '2');
-    define('RED_PHASE', '3');
-    define('PIRATE_PHASE', '4');
-}
-
-class GameStateEntry
-{
-    public int $id;
-    public string $name;
-    public ?string $initialValue;
-
-    /**
-     * @param int $id
-     * @param string $name
-     * @param string|null $initialValue
-     */
-    public function __construct(int     $id,
-                                string  $name,
-                                ?string $initialValue = null)
-    {
-        $this->id = $id;
-        $this->name = $name;
-        $this->initialValue = $initialValue;
-    }
-
-    public function hasInitialValue(): bool
-    {
-        return !is_null($this->initialValue);
-    }
-}
-
-class GameOption
-{
-    public int $id;
-    public string $name;
-    public string $translatedLabel;
-    public array $availableOptions;
-    public int $defaultValue;
-    public int $selectedValue;
-
-    public function __construct(int    $id,
-                                string $name,
-                                string $translatedLabel,
-                                array  $availableOptions,
-                                int    $defaultValue)
-    {
-        $this->id = $id;
-        $this->name = $name;
-        $this->translatedLabel = $translatedLabel;
-        $this->availableOptions = $availableOptions;
-        $this->defaultValue = $defaultValue;
-    }
-}
-
-class TutorialHeartsZipvole extends Table
-{
-    private CardTypes $cardTypes;
-
-    private array $gameStateEntries;
-    private array $gameOptions;
-    private array $cards;
-
-    function __construct()
-    {
-        // Your global variables labels:
-        //  Here, you can assign labels to global variables you are using for this game.
-        //  You can use any number of global variables with IDs between 10 and 99.
-        //  If your game has options (variants), you also have to associate here a label to
-        //  the corresponding ID in gameoptions.inc.php.
-        // Note: afterwards, you can get/set the global variables with getGameStateValue/setGameStateInitialValue/setGameStateValue
+    function __construct() {
         parent::__construct();
 
-        $this->gameStateEntries = [
-            new GameStateEntry(10, CURRENT_PHASE, GREEN_PHASE),
-            new GameStateEntry(11, REMAINING_LIVES),
-            new GameStateEntry(12, SPARE_LIVES, 2),
-        ];
+        $this->gameStateEntries = require "./modules/Friday/game_states.php";
 
-        $this->gameOptions = [
-            OPTION_LEVEL => new GameOption(100,
-                                           OPTION_LEVEL,
-                                           totranslate('Level'),
-                                           [
-                                               1 => [
-                                                   'name' => totranslate('Level 1'),
-                                                   'description' => totranslate("Start with 20 lives"),
-                                                   'tmdisplay' => totranslate('Level 1'),
-                                               ],
-                                               2 => [
-                                                   'name' => totranslate('Level 2'),
-                                                   'description' => totranslate("Instead of playing 3 rounds, the game stops when a player reaches or goes over 26."),
-                                                   'tmdisplay' => totranslate('Level 2'),
-                                               ],
-                                           ],
-                                           1),
-        ];
+        $this->gameOptions = require "./modules/Friday/options.php";
 
-        self::initGameStateLabels(array_merge($this->gameStateLabels(),
-                                              $this->gameOptionLabels()));
-
-        $this->cards = $this->createDeck('card');
+        $this->initializeStuff();
     }
 
-    private function gameStateLabels()
-    {
-        return array_map(
-            fn(GameStateEntry $gameStateEntry) => $gameStateEntry->initLabels(),
-            $this->gameStateEntries
-        );
-    }
+    private function initializeStuff() {
+        if (method_exists($this, "initializeGameState")) {
+            $this->initializeGameState();
+        }
 
-    private function initializeGameStateDependingOnSelectedOptions(): void
-    {
-        $startingLives = $this->gameOptions[OPTION_LEVEL]->selectedValue === 4 ? 18 : 20;
-        $this->setGameStateInitialValue(REMAINING_LIVES, $startingLives);
+        if (method_exists($this, "initializeDecks")) {
+            $this->initializeDecks();
+        }
     }
 
     /*
@@ -202,8 +72,7 @@ class TutorialHeartsZipvole extends Table
     */
 
     protected function setupNewGame($players,
-                                    $options = array())
-    {
+                                    $options = []) {
         // Set the colors of the players with HTML color code
         // The default below is red/green/blue/orange/brown
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
@@ -213,7 +82,7 @@ class TutorialHeartsZipvole extends Table
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
         $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar) VALUES ";
-        $values = array();
+        $values = [];
         foreach ($players as $player_id => $player) {
             $color = array_shift($default_colors);
             $values[] = "('" . $player_id . "','$color','" . $player['player_canal'] . "','" . addslashes($player['player_name']) . "','" . addslashes($player['player_avatar']) . "')";
@@ -224,30 +93,29 @@ class TutorialHeartsZipvole extends Table
         self::reloadPlayersBasicInfos();
 
         /****** Some Basic Initialization ******/
-        foreach ($this->gameStateEntries as $gameStateEntry) {
-            $this->initializeGameStateFor($gameStateEntry);
+        if (method_exists($this, "setUpGameState")) {
+            $this->setUpGameState();
+        }
+
+        if (method_exists($this, "getSelectedOptionValues")) {
+            $this->getSelectedOptionValues();
+        }
+
+        if (method_exists($this, "initializeGameStateDependingOnSelectedOptions")) {
+            $this->initializeGameStateDependingOnSelectedOptions();
         }
         /***** End of Basic Initialization *****/
-
-        /************ Start the game initialization *****/
-
-        $this->getSelectedOptionValues();
         $this->cardTypes = new CardTypes();
 
-        $this->cards->createCards($this->cardTypes->toCreateCardsSpec($currentGameLevel),
-                                  'deck');
-        $this->cards->shuffle();
-
-        $this->initializeGameStateDependingOnSelectedOptions();
-
+        $this->cards->createCards($this->cardTypes->toCreateCardsSpec($this->gameOptions));
+        $this->cards->shuffle('deck');
+        /************ Start the game initialization *****/
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
-
         /************ End of the game initialization *****/
     }
 
-    protected function getGameName()
-    {
+    protected function getGameName() {
         // Used for translations and stuff. Please do not modify.
         return "tutorialheartszipvole";
     }
@@ -261,9 +129,8 @@ class TutorialHeartsZipvole extends Table
         _ when the game starts
         _ when a player refreshes the game page (F5)
     */
-    protected function getAllDatas()
-    {
-        $result = array();
+    protected function getAllDatas() {
+        $result = [];
 
         $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
 
@@ -287,8 +154,7 @@ class TutorialHeartsZipvole extends Table
         This method is called each time we are in a game state with the "updateGameProgression" property set to true
         (see states.inc.php)
     */
-    function getGameProgression()
-    {
+    function getGameProgression() {
         // TODO: compute and return the game progression
 
         return 0;
@@ -407,8 +273,7 @@ class TutorialHeartsZipvole extends Table
     */
 
     function zombieTurn($state,
-                        $active_player)
-    {
+                        $active_player) {
         $statename = $state['name'];
 
         if ($state['type'] === "activeplayer") {
@@ -446,8 +311,7 @@ class TutorialHeartsZipvole extends Table
 
     */
 
-    function upgradeTableDb($from_version)
-    {
+    function upgradeTableDb($from_version) {
         // $from_version is the current version of this game database, in numerical form.
         // For example, if the game was running with a release of your game named "140430-1345",
         // $from_version is equal to 1404301345
@@ -470,135 +334,9 @@ class TutorialHeartsZipvole extends Table
 //        // Please add your future database scheme changes here
 //
 //
-
-
     }
 
-    private function getCurrentGameLevel(): int
-    {
+    private function getCurrentGameLevel(): int {
         return intval($this->getGameStateValue(OPTION_LEVEL));
-    }
-
-    private function createDeck(string $tableName)
-    {
-        $deck = self::getNew("module.common.deck");
-        $deck->init($tableName);
-
-        return $deck;
-    }
-
-    private function initializeGameStateFor(GameStateEntry $gameStateEntry)
-    {
-        if ($gameStateEntry->hasInitialValue()) {
-            $this->setGameStateInitialValue($gameStateEntry->name, $gameStateEntry->initialValue);
-        }
-    }
-
-    private function getSelectedOptionValues()
-    {
-        foreach ($this->gameOptions as $gameOption) {
-            $gameOption->selectedValue = intval($this->getGameStateValue($gameOption->name));
-        }
-    }
-}
-
-class CardTypes // TODO: This name sucks
-{
-    public array $robinsonCards;
-    public array $normalAgingCards;
-    public array $difficultAgingCards;
-    public array $hazardCards;
-    public array $pirateCards;
-
-    public function __construct()
-    {
-        $this->robinsonCards = [
-            new Distracted(),
-            new Weak(),
-            new Focused(),
-            new Genius(),
-            new Eating(),
-        ];
-
-        $this->normalAgingCards = [
-            new \Cards\Aging\Normal\Distracted(),
-            new Scared(),
-            new VeryTired(),
-            new Hungry(),
-            new Stupid(),
-            new VeryStupid(),
-        ];
-
-        $this->difficultAgingCards = [
-            new VeryHungry(),
-            new Idiotic(),
-            new Suicidal(),
-        ];
-
-        $this->hazardCards = [
-            // TODO: Create classes that explain how many there are
-            new WithTheRaftToTheWreckToDevelopStrategy(),
-            new WithTheRaftToTheWreckToAcquireEquipment(),
-            new WithTheRaftToTheWreckToAcquireFood(),
-            new WithTheRaftToTheWreckToLearnMimicry(),
-            new WithTheRaftToTheWreckToLearnRealization(),
-            new WithTheRaftToTheWreckToLearnDeception(),
-            new WithTheRaftToTheWreckToAcquireBooks(),
-
-            new ExploringTheIslandToAcquireWeapon(),
-            new ExploringTheIslandToAcquireFood(),
-            new ExploringTheIslandToLearnDeception(),
-            new ExploringTheIslandToLearnRepeat(),
-            new ExploringTheIslandToLearnRealization(),
-            new ExploringTheIslandToLearnMimicry(),
-
-            new FurtherExploringTheIslandToLearnRepeat(),
-            new FurtherExploringTheIslandToAcquireFood(),
-            new FurtherExploringTheIslandToLearnStrategy(),
-            new FurtherExploringTheIslandToLearnVision(),
-            new FurtherExploringTheIslandToLearnRealization(),
-            new FurtherExploringTheIslandToGainExperience(),
-
-            new EncounterWildAnimalsToLearnVision(),
-            new EncounterWildAnimalsToLearnExperience(),
-            new EncounterWildAnimalsToLearnRealization(),
-            new EncounterWildAnimalsToLearnStrategy(),
-
-            new EncounterCannibalsToAcquireWeapon(),
-        ];
-
-        $this->pirateCards = array_rand([
-                                            new Pirate(6, 20),
-                                            new Pirate(7, 25),
-                                            new Pirate(8, 30),
-                                            new Pirate(9, 35),
-                                            new Pirate(10, 40),
-                                            //  TODO: Implement the more complicated pirate Cards
-                                        ],
-                                        2);
-    }
-
-    public function toCreateCardsSpec(int $currentGameLevel): array
-    {
-        $createCardSpecFor = function (int  $typeArg,
-                                       Card $card)
-        use
-        (
-            $currentGameLevel
-        ) {
-            return [
-                "type" => $card->cardType,
-                "type_arg" => $typeArg,
-                "nbr" => $card->getHowManyInDeck($currentGameLevel),
-            ];
-        };
-
-        return array_merge(
-            array_map($createCardSpecFor, $this->robinsonCards),
-            array_map($createCardSpecFor, $this->normalAgingCards),
-            array_map($createCardSpecFor, $this->difficultAgingCards),
-            array_map($createCardSpecFor, $this->pirateCards),
-            array_map($createCardSpecFor, $this->hazardCards),
-        );
     }
 }
