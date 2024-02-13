@@ -2,8 +2,6 @@
 
 namespace ZipVole\GameTraits;
 
-use Table;
-
 trait GameWithStateOrOptions {
     private function getGameStateAndOptionLabels(): array {
         $gameStateLabels = method_exists($this, "gameStateLabels") ? $this->gameStateLabels() : [];
@@ -13,6 +11,6 @@ trait GameWithStateOrOptions {
     }
 
     protected function initializeGameState() {
-        Table::initGameStateLabels($this->getGameStateAndOptionLabels());
+        $this->table->initGameStateLabels($this->getGameStateAndOptionLabels());
     }
 }

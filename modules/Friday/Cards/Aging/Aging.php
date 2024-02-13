@@ -10,12 +10,12 @@ class Aging extends Fighting {
     const DIFFICULT = "difficult";
     public string $difficulty; // TODO: Can it be an enum
 
-    public function __construct(string         $cardType,
-                                int            $howManyInDeck,
-                                string         $title,
-                                int            $fightingValue,
-                                string         $difficulty,
-                                SpecialAbility $specialAbility = null) {
+    public function __construct(string          $cardType,
+                                int             $howManyInDeck,
+                                string          $title,
+                                int             $fightingValue,
+                                string          $difficulty,
+                                ?SpecialAbility $specialAbility = null) {
         parent::__construct($cardType,
                             $howManyInDeck,
                             $title,

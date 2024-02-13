@@ -9,7 +9,7 @@ class Fighting extends Card {
     public string $title;
     public int $fightingValue;
     public int $destructionCost;
-    public SpecialAbility $specialAbility;
+    public ?SpecialAbility $specialAbility;
 
     public function __construct(string         $cardType,
                                 int            $howManyInDeck,

@@ -2,7 +2,7 @@
 
 namespace Friday\Cards\Hazard\KnowledgeSides;
 
-use Cards\Hazard\KnowledgeSides\DoubleFightingValueOfOneCard;
+use Friday\SpecialAbilities\Positive\DoubleFightingValueOfOneCard;
 
 class Repeat extends KnowledgeSide {
     public function __construct(int $fightingValue) {

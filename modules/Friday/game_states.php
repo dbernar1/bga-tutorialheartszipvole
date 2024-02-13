@@ -2,20 +2,20 @@
 
 use ZipVole\GameStateEntry;
 
-function getTwoRandomPirateCards(): array {
-    $pirate_cards = require('./pirate_cards.php');
+if (!defined('CURRENT_PHASE')) {
+    function getTwoRandomPirateCards(): array {
+        $pirate_cards = require('pirate_cards.php');
 
-    $onePirateCardNumber = array_rand(array_keys($pirate_cards));
-    $otherPirateCardNumber = $onePirateCardNumber;
+        $onePirateCardNumber = array_rand(array_keys($pirate_cards));
+        $otherPirateCardNumber = $onePirateCardNumber;
 
-    while ($otherPirateCardNumber === $onePirateCardNumber) {
-        $otherPirateCardNumber = array_rand(array_keys($pirate_cards));
+        while ($otherPirateCardNumber === $onePirateCardNumber) {
+            $otherPirateCardNumber = array_rand(array_keys($pirate_cards));
+        }
+
+        return [$onePirateCardNumber, $otherPirateCardNumber];
     }
 
-    return [$onePirateCardNumber, $otherPirateCardNumber];
-}
-
-if (!defined('CURRENT_PHASE')) {
     define('CURRENT_PHASE', 'CURRENT_PHASE');
     define('REMAINING_LIVES', 'REMAINING_LIVES');
     define('SPARE_LIVES', 'SPARE_LIVES');

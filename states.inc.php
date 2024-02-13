@@ -49,7 +49,7 @@
 
 //    !! It is not a good idea to modify this file when a game is running !!
 
-if (!defined("ST_END_GAME")) {
+if (!defined("ST_MANAGER_SET_UP_GAME")) {
     define("ST_MANAGER_SET_UP_GAME", 1);
     define("ST_PLAYER_BEFORE_ENCOUNTER", 10);
     define("ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD", 13);
@@ -87,13 +87,14 @@ $machinestates = [
     ],
 
     ST_PLAYER_BEFORE_ENCOUNTER => [
+        "name" => "beforeEncounter",
         "type" => "activeplayer",
         "description" => clienttranslate("{you} must "),
         "possibleActions" => ["getHazardOptions"],
-        "args" => [],
         "transitions" => [
 //            "getHazardOptions" => ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD,
 "getHazardOptions" => ST_MANAGER_END_GAME,
+
         ],
     ],
     /*ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD => [

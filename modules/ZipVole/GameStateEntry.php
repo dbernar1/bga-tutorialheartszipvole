@@ -17,7 +17,7 @@ class GameStateEntry {
         $this->id = $id;
         $this->name = $name;
         $this->initialValue = $initialValue;
-        $this->$determineInitialValueBasedOnOptions = $determineInitialValueBasedOnOptions;
+        $this->determineInitialValueBasedOnOptions = $determineInitialValueBasedOnOptions;
     }
 
     public function hasStaticInitialValue(): bool {

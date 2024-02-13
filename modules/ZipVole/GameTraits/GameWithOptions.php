@@ -26,7 +26,7 @@ trait GameWithOptions {
         return $this->gameOptions[$optionName];
     }
 
-    private function getSelectedOptionValues() {
+    protected function getSelectedOptionValues() {
         foreach ($this->gameOptions as $gameOption) {
             $gameOption->selectedValue = intval($this->table->getGameStateValue($gameOption->name));
         }

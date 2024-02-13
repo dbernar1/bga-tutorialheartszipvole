@@ -2,24 +2,23 @@
 
 namespace ZipVole\GameTraits;
 
-use Table;
 use ZipVole\CardDeck;
 
 trait GameWithCards {
-    protected array $cardDecks;
+    public array $cardDecks;
 
-    protected function initializeDecks() {
+    public function initializeDecks() {
         foreach ($this->cardDecks as $deck) {
             $this->initializeBgaDeck($deck);
         }
     }
 
     protected function initializeBgaDeck(CardDeck $deck) {
-        $deck->bgaDeck = Table::getNew("module.common.deck");
+        $deck->bgaDeck = $this->getNew("module.common.deck");
         $deck->bgaDeck->init($deck->dbTableName);
     }
 
-    protected function createDecks() {
+    public function createDecks() {
         foreach ($this->cardDecks as $cardDeck) {
             $this->createDeck($cardDeck);
         }

@@ -17,18 +17,13 @@
  */
 
 spl_autoload_register(function ($className) {
-    $file = './modules/' . str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
-
-    if (!file_exists($file)) {
-        return false;
-    } else {
-        require_once $file;
-        return true;
-    }
+    require 'modules/' . str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
+    return true;
 });
 
 use Friday\Friday;
-use Friday\Game;
+use ZipVole\Game;
+use ZipVole\GameTraits\GameWithCards;
 
 if (!defined("APP_GAMEMODULE_PATH")) {
     require define("APP_GAMEMODULE_PATH", "../bga-sharedcode/misc/");
@@ -37,6 +32,8 @@ if (!defined("APP_GAMEMODULE_PATH")) {
 require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
 class TutorialHeartsZipvole extends Table {
+    use GameWithCards;
+
     private Game $game;
 
     function __construct() {
