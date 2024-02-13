@@ -15,4 +15,13 @@ class Card {
     public function getHowManyInDeck(int $level): int {
         return $this->howManyInDeck;
     }
+
+    public function getCardCreateSpec(array $gameOptions,
+                                      int   $typeArg): array {
+        return [
+            "type" => $this->cardType,
+            "type_arg" => $typeArg,
+            "nbr" => $this->getHowManyInDeck($gameOptions[OPTION_LEVEL]->selectedValue),
+        ];
+    }
 }

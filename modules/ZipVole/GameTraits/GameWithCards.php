@@ -2,6 +2,7 @@
 
 namespace ZipVole\GameTraits;
 
+use Table;
 use ZipVole\CardDeck;
 
 trait GameWithCards {
@@ -14,32 +15,17 @@ trait GameWithCards {
     }
 
     protected function initializeBgaDeck(CardDeck $deck) {
-        $deck->bgaDeck = self::getNew("module.common.deck");
+        $deck->bgaDeck = Table::getNew("module.common.deck");
         $deck->bgaDeck->init($deck->dbTableName);
     }
 
-    public function toCreateCardsSpec(int $currentGameLevel): array {
-        $createCardSpecFor = function (int  $typeArg,
-                                       Card $card)
-        use
-        (
-            $currentGameLevel
-        ) {
-            return [
-                "type" => $card->cardType,
-                "type_arg" => $typeArg,
-                "nbr" => $card->getHowManyInDeck($currentGameLevel),
-            ];
-        };
+    protected function createDecks() {
+        foreach ($this->cardDecks as $cardDeck) {
+            $this->createDeck($cardDeck);
+        }
+    }
 
-        // TODO: Continue this
-
-        return array_merge(
-            array_map($createCardSpecFor, $this->robinsonCards),
-            array_map($createCardSpecFor, $this->normalAgingCards),
-            array_map($createCardSpecFor, $this->difficultAgingCards),
-            array_map($createCardSpecFor, $this->pirateCards),
-            array_map($createCardSpecFor, $this->hazardCards),
-        );
+    private function createDeck(CardDeck $cardDeck) {
+        $cardDeck->createBgaDeck(property_exists($this, "gameOptions") ? $this->gameOptions : []);
     }
 }

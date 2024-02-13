@@ -1,1 +1,3 @@
 .idea
+# misc/module is a link to the PHP stubs
+misc/module

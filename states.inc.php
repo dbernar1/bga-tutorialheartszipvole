@@ -88,12 +88,15 @@ $machinestates = [
 
     ST_PLAYER_BEFORE_ENCOUNTER => [
         "type" => "activeplayer",
+        "description" => clienttranslate("{you} must "),
         "possibleActions" => ["getHazardOptions"],
+        "args" => [],
         "transitions" => [
-            "getHazardOptions" => ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD,
+//            "getHazardOptions" => ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD,
+"getHazardOptions" => ST_MANAGER_END_GAME,
         ],
     ],
-    ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD => [
+    /*ST_PLAYER_ENCOUNTER_CHOOSING_HAZARD => [
         "type" => "activeplayer",
         "possibleActions" => ["chooseHazard", "ignoreSingleHazard"],
         "transitions" => [
@@ -248,7 +251,7 @@ $machinestates = [
         "transitions" => [
             "mournDeathOfRobinson" => ST_MANAGER_END_GAME,
         ],
-    ],
+    ],*/
     // Final state.
     // Please do not modify (and do not overload action/args methods).
     ST_MANAGER_END_GAME => [

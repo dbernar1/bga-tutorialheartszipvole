@@ -14,10 +14,13 @@ trait GameWithStateAndOptions {
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     private function initializeDynamicDefaultValueFor(GameStateEntry $gameStateEntry) {
         if (!$gameStateEntry->hasStaticInitialValue()) {
-            $this->setGameStateInitialValue($gameStateEntry->name,
-                                            $gameStateEntry->getInitialValue($this->gameOptions));
+            $this->table->setGameStateInitialValue($gameStateEntry->name,
+                                                   $gameStateEntry->getInitialValue($this->gameOptions));
         }
     }
 }

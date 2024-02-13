@@ -27,40 +27,24 @@ spl_autoload_register(function ($className) {
     }
 });
 
-use ZipVole\GameTraits\GameWithCards;
-use ZipVole\GameTraits\GameWithStateAndOptions;
+use Friday\Friday;
+use Friday\Game;
 
 if (!defined("APP_GAMEMODULE_PATH")) {
-    define("APP_GAMEMODULE_PATH", "./bga_stubs/");
+    require define("APP_GAMEMODULE_PATH", "../bga-sharedcode/misc/");
 }
 
 require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
 class TutorialHeartsZipvole extends Table {
-    use GameWithStateAndOptions;
-    use GameWithCards;
-    use FridayPlayerActions;
-    use FridayGameActions;
-    use FridayStateMachine;
+    private Game $game;
 
     function __construct() {
         parent::__construct();
 
-        $this->gameStateEntries = require "./modules/Friday/game_states.php";
+        $this->game = new Friday($this);
 
-        $this->gameOptions = require "./modules/Friday/options.php";
-
-        $this->initializeStuff();
-    }
-
-    private function initializeStuff() {
-        if (method_exists($this, "initializeGameState")) {
-            $this->initializeGameState();
-        }
-
-        if (method_exists($this, "initializeDecks")) {
-            $this->initializeDecks();
-        }
+        $this->game->initialize();
     }
 
     /*
@@ -92,23 +76,7 @@ class TutorialHeartsZipvole extends Table {
         self::reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
         self::reloadPlayersBasicInfos();
 
-        /****** Some Basic Initialization ******/
-        if (method_exists($this, "setUpGameState")) {
-            $this->setUpGameState();
-        }
-
-        if (method_exists($this, "getSelectedOptionValues")) {
-            $this->getSelectedOptionValues();
-        }
-
-        if (method_exists($this, "initializeGameStateDependingOnSelectedOptions")) {
-            $this->initializeGameStateDependingOnSelectedOptions();
-        }
-        /***** End of Basic Initialization *****/
-        $this->cardTypes = new CardTypes();
-
-        $this->cards->createCards($this->cardTypes->toCreateCardsSpec($this->gameOptions));
-        $this->cards->shuffle('deck');
+        $this->game->setUpGame();
         /************ Start the game initialization *****/
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
@@ -139,7 +107,7 @@ class TutorialHeartsZipvole extends Table {
         $sql = "SELECT player_id id, player_score score FROM player ";
         $result['players'] = self::getCollectionFromDb($sql);
 
-        // TODO: Gather all information about current game situation (visible by player $current_player_id).
+        $this->game->enhanceAllDatasResult($result, $current_player_id);
 
         return $result;
     }

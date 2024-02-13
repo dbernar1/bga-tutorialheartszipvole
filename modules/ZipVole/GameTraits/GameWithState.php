@@ -30,8 +30,8 @@ trait GameWithState {
 
     private function initializeGameStateFor(GameStateEntry $gameStateEntry) {
         if ($gameStateEntry->hasStaticInitialValue()) {
-            $this->setGameStateInitialValue($gameStateEntry->name,
-                                            $gameStateEntry->initialValue);
+            $this->table->setGameStateInitialValue($gameStateEntry->name,
+                                                   $gameStateEntry->initialValue);
         }
     }
 }
